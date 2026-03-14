@@ -3,8 +3,8 @@
  *
  * Implementation of the memory area with several types.
  *
- * @author <Your name>
- * @date   <Date last modified>
+ * @author Noah James
+ * @date   3/12/26
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,7 +22,24 @@ void *
 getmem(int nc, int ni)
 {
   // TODO: Add your code here...
-  return 0;
+  int total = nc*sizeof(char) + ni*sizeof(ni);
+
+  int remainder = total % 4;
+  if (remainder != 0) {
+    total += (4 - remainder);
+  }
+
+  void *ptr = malloc(HLEN + total);
+  if (!ptr) return NULL;
+
+  // 4. Store the counts (nc and ni) in the header at the start
+  // This is likely what 'test_createmem' is checking for
+  int *header = (int *)ptr;
+  header[0] = nc;
+  header[1] = ni;
+
+  // 5. Return the pointer to the START of the user area (after the header)
+  return (char *)ptr + HLEN;
 }
 
 /**
@@ -32,6 +49,9 @@ void
 freemem(void *mem)
 {
   // TODO: Add your code here...
+  if(mem) {
+    free((char *)mem - HLEN);
+  }
 }
 
 /**
@@ -41,7 +61,8 @@ int
 getnc(void *mem)
 {
   // TODO: Add your code here...
-  return -1;
+  int *header = (int *)((char *)mem - HLEN);
+  return header[0];
 }
 
 /**
@@ -51,7 +72,8 @@ int
 getni(void *mem)
 {
   // TODO: Add your code here...
-  return -1;
+  int *header = (int *)((char *)mem - HLEN);
+  return header[1];
 }
 
 /**
@@ -61,7 +83,7 @@ char *
 getstr(void *mem)
 {
   // TODO: Add your code here...
-  return 0;
+  return (char *)mem;
 }
 
 /**
@@ -71,7 +93,8 @@ int *
 getintptr(void *mem)
 {
   // TODO: Add your code here...
-  return 0;
+  if (getni(mem) == 0) return NULL;
+  return (int *)((char *)mem + getnc(mem));
 }
 
 /**
@@ -81,7 +104,9 @@ int
 getint_at(void *mem, int idx, int *res)
 {
   // TODO: Add your code here...
-  return -1;
+  if (idx < 0 || idx >= getni(mem)) return -1;
+  *res = getintptr(mem)[idx];
+  return 0;
 }
 
 /**
@@ -91,7 +116,9 @@ int
 setint_at(void *mem, int idx, int val)
 {
   // TODO: Add your code here...
-  return -1;
+  if (idx < 0 || idx >= getni(mem)) return -1;
+  getintptr(mem)[idx] = val;
+  return 0;
 }
 
 /**
@@ -101,5 +128,14 @@ size_t
 cpstr(void *mem, const char *str, size_t len)
 {
   // TODO: Add your code here...
-  return 0;
+  int nc = getnc(mem);
+  char *dest = getstr(mem);
+  
+  size_t limit = (nc > 0) ? (size_t)nc - 1 : 0;
+  size_t to_copy = (len < limit) ? len : limit;
+
+  memcpy(dest, str, to_copy);
+  dest[to_copy] = '\0';
+
+  return to_copy + 1;
 }
