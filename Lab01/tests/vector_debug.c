@@ -20,6 +20,8 @@ main(int argc, char **argv)
   // compiled and built into %_debug.run that you can load into gdb.
   printf("TODO: Add vector debug code here if needed...\n");
 
+  printf("%d\n", vec_elem_at(vec, 1));
+
   vec_free(vec);
   return EXIT_SUCCESS;
 }

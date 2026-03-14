@@ -28,6 +28,11 @@ void
 node_rm_node(struct oo_node *node)
 {
   // TODO: Add your code here...
+  node->prev->next = node->next;
+  
+  node->next->prev = node->prev;
+
+  node->next = node->prev = node;
 }
 
 // This is a helper function, feel free to keep it here or remove it if you do
@@ -48,6 +53,7 @@ void
 node_add_tail(struct oo_node *head, struct oo_node *node)
 {
   // TODO: Add your code here..
+  _node_add(head->prev, node);
 }
 
 /**
@@ -57,6 +63,7 @@ void
 node_add_head(struct oo_node *head, struct oo_node *node)
 {
   // TODO: Add your code here..
+  _node_add(head, node);
 }
 
 /**
@@ -84,6 +91,8 @@ void
 db_add_record(struct db *db, struct oo_node *node)
 {
   // TODO: Add your code here...
+  node_add_tail(&db->head, node);
+  db->rcount++;
 }
 
 /**
@@ -143,4 +152,21 @@ int
 searching_seek_and_destroy(struct db *db, unsigned long value)
 {
   // TODO: Add your code here....
+  int count = 0;
+  struct oo_node *curr = db->head.next;
+  struct oo_node *next;
+
+  while (curr != &db->head) {
+    next = curr->next;
+
+    struct db_ulong *record = node_to_dbulong(curr);
+    if (record->value == value) {
+      node_rm_node(curr);
+      db->rcount--;
+      count++;
+    }
+    curr = next;
+  }
+  
+  return count;
 }
