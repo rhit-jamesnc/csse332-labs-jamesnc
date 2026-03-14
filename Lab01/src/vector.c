@@ -3,8 +3,8 @@
  *
  * Implementation of the vector data structure for Lab 01 of CSSE332.
  *
- * @author <Your name>
- * @date   <Date last modified>
+ * @author Noah James
+ * @date   3/14/26
  */
 
 #include <assert.h>
@@ -46,6 +46,12 @@ void
 vec_free(struct vector *vec)
 {
   // TODO: Add your code here...
+  if(vec) {
+    if(vec->data) {
+      free(vec->data);
+    }
+    free(vec);
+  }
 }
 
 static void
@@ -68,7 +74,11 @@ vec_push_back(struct vector *vec, unsigned int elem)
   // TODO: Add your code here...
   //  Please remove this line, it is used to silence compiler errors before
   //  starting.
-  (void)__vec_realloc(0);
+  if(vec->len >= vec->cap) {
+    __vec_realloc(vec);
+  }
+  vec->data[vec->len] = elem;
+  vec->len++;
 }
 
 /**
@@ -82,7 +92,8 @@ vec_pop_back(struct vector *vec)
   }
 
   // TODO: Add your code here....
-  return 0;
+  vec->len--;
+  return vec->data[vec->len];
 }
 
 /**
@@ -92,11 +103,12 @@ unsigned int
 vec_elem_at(struct vector *vec, unsigned int i)
 {
   if(!vec || i >= vec->len) {
+    errno = EINVAL;
     return (unsigned int)-1; // doesn't matter what we return.
   }
 
   // TODO: Add your code here...
-  return 0;
+  return vec->data[i];
 }
 
 /**
@@ -106,9 +118,11 @@ int
 vec_set_at(struct vector *vec, unsigned int i, unsigned int elem)
 {
   if(!vec || i >= vec->len) {
+    errno = EINVAL;
     return -1;
   }
 
   // TODO: Add your code here...
-  return -1;
+  vec->data[i] = elem;
+  return 0;
 }

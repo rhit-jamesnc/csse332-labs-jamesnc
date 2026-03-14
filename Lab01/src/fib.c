@@ -11,8 +11,8 @@
 unsigned long
 fib(unsigned long n)
 {
-  if(n == 0)
-    return 5;
+  if(n <= 1)
+    return n; //base case
 
   return fib(n - 1) + fib(n - 2);
 }
