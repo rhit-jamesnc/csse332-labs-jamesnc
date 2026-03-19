@@ -3,8 +3,8 @@
  *
  * Implementation of the memory area with several types.
  *
- * @author <Your name>
- * @date   <Date last modified>
+ * @author Noah James
+ * @date   3/18/26
  */
 #ifndef READING_H
 #define READING_H

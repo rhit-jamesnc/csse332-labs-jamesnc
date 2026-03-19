@@ -3,8 +3,8 @@
  *
  * Implementation of the memory area with several types.
  *
- * @author <Your name>
- * @date   <Date last modified>
+ * @author Noah James
+ * @date   3/18/26
  */
 #include <errno.h>
 #include <stdio.h>
@@ -13,6 +13,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <bits/time.h>
 
 #include "freading.h"
 
@@ -45,7 +46,24 @@ ssize_t
 stream_read_bytes(FILE *fp, char *buf, ssize_t len, size_t incr)
 {
   // TODO: Complete this step for the lab.
-  return 0;
+  ssize_t ret = 0, rlen = 0;
+
+  while (len > 0 && (ret = fread(buf, 1, incr, fp))) {
+    if (ret == 0) {
+      if (errno == EINTR) {
+        continue;
+      }
+      perror("Major error while reading file");
+      return -1;
+    }
+
+    buf += ret;
+    rlen += ret;
+    len -= ret;
+    break;
+  }
+
+  return rlen;
 }
 
 static double
@@ -73,10 +91,13 @@ _main(int argc, char **argv)
   ssize_t blk              = 1;
   ssize_t fsize            = 0;
   struct timespec ts_start = {0, 0}, ts_end = {0, 0};
+  ssize_t tot = 0;
+  ssize_t ret;
+  char *buf;
 
   // TODO: Please comment out this line when you implement the last step in
   // this file.
-  (void)_subtract_timspec(ts_start, ts_end);
+  // (void)_subtract_timspec(ts_start, ts_end);
 
   if(argc > 1) {
     errno = 0;
@@ -103,7 +124,17 @@ _main(int argc, char **argv)
 
   // TODO:
   // =====
-  //  Add code here to real of the bytes in the input file stream.
+  //  Add code here to read of the bytes in the input file stream.
+
+  printf("[LOG] File is of size %ld bytes, allocating buffer.\n", fsize);
+
+  buf = malloc(fsize);
+  if(!buf) {
+    fprintf(stderr, "[ERROR]: malloc failed.\n");
+    // be a good person and do the following...
+    fclose(stream);
+    return EXIT_FAILURE;
+  }
 
   // HINT:
   // =====
@@ -112,7 +143,19 @@ _main(int argc, char **argv)
   // Add #include <time.h> if it's not there.
   //
 
-  // clock_gettime(CLOCK_MONOTONIC, &ts_start);
+  clock_gettime(CLOCK_MONOTONIC, &ts_start);
+
+  while((ret = stream_read_bytes(stream, buf+tot, fsize-tot, blk))) {
+    if(ret == -1) {
+      fprintf(stderr, "[ERROR]: read failed.\n");
+      rc = EXIT_FAILURE;
+      break;
+    } else {
+      tot += ret;
+      printf("[LOG] Successfully read %ld bytes.\n", tot);
+    }
+  }
+
   //
   //   THING YOU'D LIKE TO MEASURE HERE
   //
@@ -121,10 +164,11 @@ _main(int argc, char **argv)
   //    PLEASE USE THE SAME FPRINTF STATEMENT BELOW AS THE GRADING SCRIPT
   //    DEPENDS ON IT.
   //
-  // clock_gettime(CLOCK_MONOTONIC, &ts_end);
-  // fprintf(stderr, "%lf seconds time elapsed\n",
-  //         _subtract_timspec(ts_end, ts_start));
+  clock_gettime(CLOCK_MONOTONIC, &ts_end);
+  fprintf(stderr, "%lf seconds time elapsed\n",
+          _subtract_timspec(ts_end, ts_start));
 
+  free(buf);
   fclose(stream);
   return rc;
 }
