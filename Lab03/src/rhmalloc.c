@@ -1,8 +1,8 @@
 /**
  * Copyright (c) 2025 Rose-Hulman Institute of Technology. All Rights Reserved.
  *
- * @author <Your name>
- * @date   <Date last modified>
+ * @author Noah James
+ * @date   4/8/26
  */
 
 #include <errno.h>
@@ -55,6 +55,15 @@ rhmalloc_init(void)
   // =====
   //  Add code here to initialize heap_mem_start, freelist, and the content of
   //  freelist.
+  freelist = (struct metadata *)p;
+  heap_mem_start = p;
+
+  // set up head node
+  freelist->in_use = 0;
+  freelist->size = MAX_HEAP_SIZE - sizeof(struct metadata);
+  freelist->next = 0;
+  freelist->prev = 0;
+
   return 0;
 }
 
@@ -81,7 +90,31 @@ rhmalloc(size_t size)
   // =====
   //  Add code here to find a suitable block and return a pointer to the start
   //  of the usable memory region for it.
+  struct metadata *curr = freelist;
 
+  while (curr) {
+    if (!curr->in_use && curr->size >= size) {
+      if (curr->size >= size + sizeof(struct metadata) + ALIGNMENT) {
+        struct metadata *new_block = (struct metadata *)((char *)curr + sizeof(struct metadata) + size);
+        
+        new_block->size = curr->size - size - sizeof(struct metadata);
+        new_block->in_use = 0;
+        new_block->next = curr->next;
+        new_block->prev = curr;
+        
+        if (curr->next) {
+          curr->next->prev = new_block;
+        }
+        
+        curr->size = size;
+        curr->next = new_block;
+      }
+      
+      curr->in_use = 1;
+      return (void *)((char *)curr + sizeof(struct metadata));
+    }
+    curr = curr->next;
+  }
   // return here when we can't find a block, so set errno to ENOMEM.
   errno = ENOMEM;
   return 0;
@@ -94,4 +127,28 @@ rhfree(void *p)
   // =====
   //  Add code here to coalese the block to free with the next and previous
   //  blocks if applicable.
+  if (!p) {
+    return;
+  }
+
+  struct metadata *curr = (struct metadata *)((char *)p - sizeof(struct metadata));
+  curr->in_use = 0;
+
+  if (curr->next && !curr->next->in_use) {
+    struct metadata *neighbor = curr->next;
+    curr->size += sizeof(struct metadata) + neighbor->size;
+    curr->next = neighbor->next;
+    if (curr->next) {
+      curr->next->prev = curr;
+    }
+  }
+
+  if (curr->prev && !curr->prev->in_use) {
+    struct metadata *neighbor = curr->prev;
+    neighbor->size += sizeof(struct metadata) + curr->size;
+    neighbor->next = curr->next;
+    if (curr->next) {
+      curr->next->prev = neighbor;
+    }
+  }
 }
