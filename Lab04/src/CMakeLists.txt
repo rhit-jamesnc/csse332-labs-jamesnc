@@ -12,14 +12,10 @@ macro(add_project_lib library)
 endmacro(add_project_lib)
 
 # each problem will be compiled into a library that the tests use
-add_project_lib(rf_parse rf_parse.c)
+add_project_lib(sig sig.c)
 if(BUILD_SOLUTIONS)
-  add_project_lib(rf_load rf_load_solution.c)
-  # add_project_lib(rf_proc rf_proc_solution.c)
-  # add_project_lib(rf_sched rf_sched_solution.c)
+  add_project_lib(shell shell_solution.c)
 else(BUILD_SOLUTIONS)
-  add_project_lib(rf_load rf_load.c)
-  # add_project_lib(rf_proc rf_proc.c)
-  # add_project_lib(rf_sched rf_sched.c)
+  add_project_lib(shell shell.c)
 endif(BUILD_SOLUTIONS)
 

@@ -1,5 +1,9 @@
 # top level testing
 
+if(BUILD_BINUTILS)
+  link_libraries(bfd opcodes)
+endif(BUILD_BINUTILS)
+
 macro(add_test_executable prefix)
   add_executable(${prefix}_tests.run ${prefix}_tests.c)
   target_link_libraries(${prefix}_tests.run ${prefix} cgrade ${ARGN})
@@ -17,15 +21,12 @@ macro(add_debug_executable prefix)
     PRIVATE ${PROJECT_SOURCE_DIR}/src)
 endmacro(add_debug_executable)
 
-add_test_executable(shell shell sig readline)
-add_debug_executable(shell shell sig readline)
+# add_test_executable(fib)
+add_debug_executable(rf_parse)
+add_debug_executable(rf_load rf_parse)
 
-# Add the simpleshell itself for student testing.
-add_executable(simpleshell.run simpleshell.c)
-target_link_libraries(simpleshell.run shell sig readline)
-target_include_directories(simpleshell.run
-    PUBLIC ${PROJECT_SOURCE_DIR}/include
-    PRIVATE ${PROJECT_SOURCE_DIR}/src)
+# Graded test suites
+add_test_executable(rf_load rf_parse)
 
-# add donothing
-add_executable(donothing.run donothing.c)
+# mmap example
+add_executable(mmap_example.run mmap_example.c)

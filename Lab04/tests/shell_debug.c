@@ -17,16 +17,18 @@
 int
 main(int argc, char **argv)
 {
-  char *cmd = "echo hello";
-  int carg  = 0;
-  int i     = 0;
+  const char *cmd = "echo hello";
+  int carg        = 0;
+  int i           = 0;
   char *varg[MAX_SHELL_ARGS];
+  char scmd[MAX_SHELL_ARGS];
 
-  carg = generate_exec_args(cmd, varg);
+  snprintf(scmd, MAX_SHELL_ARGS, "%s", cmd);
+  carg = generate_exec_args(scmd, varg);
   for(i = 0; i < carg; i++) {
-    printf("argv[i] is %s\n", argv[i]);
+    printf("argv[i] is %s\n", varg[i]);
   }
-  printf("Last argument is %s\n", argv[i]);
+  printf("Last argument is %s\n", varg[i]);
 
   return EXIT_SUCCESS;
 }
