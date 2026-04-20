@@ -58,18 +58,32 @@ main(int argc, char **argv)
       printf("Ouch, received interrupt signal number %d\n", num_sigint);
     }
   }
+  last_sigint = num_sigint;
+  printf("Ouch, received interrupt signal number %d\n", num_sigint);
 
   printf("[%s:%d] Tired of you interrupting me...\n", argv[0], getpid());
   mask_signal(SIGINT);
   printf("[%s:%d] Let's see you try now...\n", argv[0], getpid());
-  sleep(10);
+  sleep(5);
   unmask_signal(SIGINT);
   printf("[%s:%d] Back to receiving interrupts!\n", argv[0], getpid());
-  while(1)
+  while(num_sigint < 6) {
     if(num_sigint != last_sigint) {
       last_sigint = num_sigint;
       printf("Ouch, received interrupt signal number %d\n", num_sigint);
     }
+  }
+  last_sigint = num_sigint;
+  printf("Ouch, received interrupt signal number %d\n", num_sigint);
+
+  printf("[%s:%d] I am so tired of you right now!\n", argv[0], getpid());
+  setsighandler(SIGINT, SIG_IGN);
+  while(num_sigint < 9) {
+    if(num_sigint != last_sigint) {
+      last_sigint = num_sigint;
+      printf("Ouch, received interrupt signal number %d\n", num_sigint);
+    }
+  }
 
   exit(0);
 }
