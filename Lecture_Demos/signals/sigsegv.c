@@ -1,8 +1,10 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include <signal.h>
+#include <stdio.h>
+#include <unistd.h>
 
-void setsighandler(int signum, void (*handler)(int)) {
+void
+setsighandler(int signum, void (*handler)(int))
+{
   struct sigaction act;
 
   act.sa_handler = handler;
@@ -11,17 +13,22 @@ void setsighandler(int signum, void (*handler)(int)) {
   sigaction(signum, &act, NULL);
 }
 
-void handle_seg_fault(int sig) {
+void
+handle_seg_fault(int sig)
+{
+  // It is a bad idea to use printf in a signal handler, why is that?
   printf("oh oh, I accessed memory incorrectly\n");
   printf("probably should exit gracefully\n");
 
-  exit(99);
+  _exit(99);
 
   // Question: What do you think will happen if we just use the following:
   // return;
 }
 
-int main(int argc, char **argv) {
+int
+main(int argc, char **argv)
+{
   int *p = 0x00;
 
   setsighandler(SIGSEGV, handle_seg_fault);
