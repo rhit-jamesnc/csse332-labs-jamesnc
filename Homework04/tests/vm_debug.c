@@ -1,8 +1,8 @@
 /**
  * Copyright (c) 2026 Rose-Hulman Institute of Technology. All Rights Reserved.
  *
- * @author <Your name>
- * @date   <Date last modified>
+ * @author Noah James
+ * @date   4/20/26
  */
 
 #include <stdio.h>

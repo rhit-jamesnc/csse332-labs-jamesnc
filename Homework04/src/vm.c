@@ -1,8 +1,8 @@
 /**
  * Copyright (c) 2026 Rose-Hulman Institute of Technology. All Rights Reserved.
  *
- * @author <Your name>
- * @date   <Date last modified>
+ * @author Noah James
+ * @date   4/20/26
  */
 
 #include <errno.h>
@@ -116,6 +116,11 @@ init_vm(void)
   // TODO:
   // ======
   //  Initialize the page table
+  for (int i = 0; i < NUM_VIRT_PAGES; i++) {
+      pgtbl[i].state = UNUSED;
+      pgtbl[i].freshness = 0;
+      pgtbl[i].offset = i * getpagesize();
+  }
 
   // set the segfault handler
   sigemptyset(&act.sa_mask);
@@ -160,7 +165,11 @@ segv_handler(int sig, siginfo_t *si, void *unused)
   // =====
   //  Calculate the page number and check that is a valid one.
   //  Use `goto fail_on_segv` to exit with an error.
-  (void)addr;
+  uint64_t fault_addr = (uint64_t)addr;
+  if(fault_addr < mem_start || fault_addr >= mem_start + (NUM_VIRT_PAGES * getpagesize())) {
+    goto fail_on_segv;
+  }
+  int pagenum = (fault_addr - mem_start) / getpagesize();
 
   write(1, "In handler for a segmentation fault!\n",
         strlen("In handler for a segmentation fault!\n"));
@@ -170,7 +179,9 @@ segv_handler(int sig, siginfo_t *si, void *unused)
   //  Uncomment this line after your start otherwise you will alaways fail.
   //  Note that if you don't map page correctly, you might end up in an
   //  infinite loop.
-  goto fail_on_segv;
+  if(pgtbl[pagenum].state == ACTIVE) {
+    goto fail_on_segv;
+  }
 
   // TODO:
   // =====
@@ -178,14 +189,47 @@ segv_handler(int sig, siginfo_t *si, void *unused)
   //  Make sure to do error checking.
   //
   // check for an edge case if we get here because of non page issue
+  int active_count = 0;
+  for(int i = 0; i < NUM_VIRT_PAGES; i++) {
+    if (pgtbl[i].state == ACTIVE) {
+      active_count++;
+    }
+  }
+
+  for(int i = 0; i < NUM_VIRT_PAGES; i++) {
+    if (pgtbl[i].state == ACTIVE && i != pagenum && pgtbl[i].freshness > 0) {
+      pgtbl[i].freshness--;
+    }
+  }
+
+  
 
   // TODO:
   // =====
   //   Decide if any pages need to be evicted.
+  if(active_count >= NUM_PHYS_FRAMES) {
+    int victim = -1;
+    for(int i = 0; i < NUM_VIRT_PAGES; i++) {
+      if (pgtbl[i].state == ACTIVE && pgtbl[i].freshness == 0) {
+        victim = i;
+        break;
+      }
+    }
+    if(victim != -1) {
+      evict_page(victim, &pgtbl[victim]);
+    }
+  }
 
   // TODO:
   // =====
   //  Map the page into memory using the `map_page` function.
+  if(map_page(pagenum, &pgtbl[pagenum]) == -1) {
+      goto fail_on_segv;
+  }
+  
+  pgtbl[pagenum].state = ACTIVE;
+  pgtbl[pagenum].freshness = NUM_PHYS_FRAMES;
+
   return;
 
 fail_on_segv:
@@ -200,6 +244,13 @@ evict_page(int pagenum, struct pte *pte)
   // =====
   //
   //  Call `munmap` to unmap the requested page and adjust the pte accordingly.
+  void *pgaddr = (void *)mem_start + (pagenum * getpagesize());
+  if (mmap(pgaddr, getpagesize(), PROT_NONE, MAP_SHARED | MAP_FIXED, swap_fd, pte->offset) == MAP_FAILED) {
+      return -1;
+  }
+
+  pte->state = EVICTED;
+  pte->freshness = 0;
   return 0;
 }
 
@@ -233,7 +284,7 @@ give_me_pages(int num_pages)
   //
   //  Do practically nothing, approach this lazily as memory is required, just
   //  promise the pages at some point.
-  return 0;
+  return (void *)mem_start;
 }
 
 /********************************************************************************
