@@ -12,10 +12,9 @@ macro(add_project_lib library)
 endmacro(add_project_lib)
 
 # each problem will be compiled into a library that the tests use
-add_project_lib(sig sig.c)
 if(BUILD_SOLUTIONS)
-  add_project_lib(shell shell_solution.c)
+  add_project_lib(vm vm_solution.c)
 else(BUILD_SOLUTIONS)
-  add_project_lib(shell shell.c)
+  add_project_lib(vm vm.c)
 endif(BUILD_SOLUTIONS)
 

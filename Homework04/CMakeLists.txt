@@ -23,23 +23,10 @@ FetchContent_MakeAvailable(cgrade)
 # Set some config options for output directories
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # build everything with debug flags
 add_compile_options(-Wall -Werror -ggdb -O0)
-
-# check for libpcap
-find_library(READLINE readline REQUIRED)
-
-# declare options
-option(BUILD_SOLUTIONS
-  "[INSTRUCTOR ONLY] Build with solutions for testing" OFF)
-
-if(DEFINED READLINE)
-  message("-- Found libreadline library!")
-else(DEFINED READLINE)
-  message(ERROR "ERROR: libreadline was not found. Please read the instructions clearly!")
-  message(ERROR "ERROR: You should run `sudo apt install -y libreadline5-dev`")
-endif()
 
 # everything in src/ directory is relevant and should be built into libraries
 add_subdirectory(src)
