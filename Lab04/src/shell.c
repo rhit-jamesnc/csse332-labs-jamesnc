@@ -1,8 +1,8 @@
 /**
  * Copyright (c) 2025 Rose-Hulman Institute of Technology. All Rights Reserved.
  *
- * @author <Your name>
- * @date   <Date last modified>
+ * @author Noah James
+ * @date   4/22/26
  */
 #include <ctype.h>
 #include <readline/history.h>
@@ -85,7 +85,20 @@ generate_exec_args(char *cmd, char *argv[])
   // TODO:
   // =====
   //  Implement this function...
-  return 0;
+  int count = 0;
+  char *token;
+
+  token = strtok(cmd, " ");
+
+  while (token != NULL && count < MAX_ARGS - 1) {
+      argv[count] = token;
+      count++;
+      token = strtok(NULL, " ");
+  }
+
+  argv[count] = NULL;
+
+  return count;
 }
 
 int

@@ -1,8 +1,8 @@
 /**
  * Copyright (c) 2025 Rose-Hulman Institute of Technology. All Rights Reserved.
  *
- * @author <Your name>
- * @date   <Date last modified>
+ * @author Noah James
+ * @date   4/22/26
  */
 #ifndef _SHELL_H
 #define _SHELL_H
