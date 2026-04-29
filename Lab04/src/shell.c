@@ -12,6 +12,7 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "shell.h"
 #include "sig.h"
@@ -67,7 +68,9 @@ get_prompt_line(void)
 }
 
 void handle_sigchld(int sig) {
+  int saved_errno = errno;
   while (waitpid(-1, NULL, WNOHANG) > 0);
+  errno = saved_errno;
 }
 
 void
@@ -138,7 +141,7 @@ start_fg_command(char *cmd)
     return -1;
   }
 
-  printf("Running forgeround command %s with %d arguments\n", argv[0], count);
+  printf("Running foreground command %s with %d arguments\n", argv[0], count);
 
   pid_t pid = fork();
 
@@ -191,8 +194,8 @@ start_bg_command(char *cmd)
   int count = 0; 
   char *token = strtok(cmd, " ");
   while (token != NULL && count < MAX_ARGS - 1) {
-    argv[count++] = token;
-    token = strtok(NULL, " ");
+      argv[count++] = token;
+      token = strtok(NULL, " ");
   }
   argv[count] = NULL;
 
@@ -235,5 +238,4 @@ start_bg_command(char *cmd)
   } else {
     return;
   }
-
 }
