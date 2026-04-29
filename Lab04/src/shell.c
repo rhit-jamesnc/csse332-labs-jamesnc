@@ -178,8 +178,9 @@ start_bg_command(char *cmd)
   // =====
   //   Implement code to start a background command.
   char *argv[MAX_ARGS];
-
   char cmd_copy[1024];
+
+  memset(cmd_copy, 0, sizeof(cmd_copy));
   strncpy(cmd_copy, cmd, 1024);
   
   int len = strlen(cmd);
@@ -224,8 +225,7 @@ start_bg_command(char *cmd)
       perror("execvp");
       exit(EXIT_FAILURE);
     } else {
-      int status;
-      waitpid(worker_pid, &status, 0);
+      waitpid(worker_pid, NULL, 0);
       
       printf("Background command %s finished\n", cmd_copy);
       fflush(stdout);
