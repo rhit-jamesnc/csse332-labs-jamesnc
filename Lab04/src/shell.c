@@ -184,12 +184,7 @@ start_bg_command(char *cmd)
   char cmd_copy[1024];
 
   memset(cmd_copy, 0, sizeof(cmd_copy));
-  strncpy(cmd_copy, cmd, 1024);
-  
-  int len = strlen(cmd);
-  cmd[len] = ' ';
-  cmd[len+1] = '&';
-  cmd[len+2] = '\0';
+  strncpy(cmd_copy, cmd, 1023);
 
   int count = 0; 
   char *token = strtok(cmd, " ");
@@ -211,15 +206,16 @@ start_bg_command(char *cmd)
   }
 
   if (pid == 0) {
-    printf("Running background command %s with %d arguments\n", argv[0], count);
-    fflush(stdout);
-
     for (int i = 0; i < count; i++) {
       if (argv[i] != NULL && strcmp(argv[i], "&") == 0) {
         argv[i] = NULL;
+        count = i; 
         break;
       }
     }
+
+    printf("Running background command %s with %d arguments\n", argv[0], count);
+    fflush(stdout);
 
     pid_t worker_pid = fork();
 
