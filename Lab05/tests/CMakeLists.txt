@@ -24,9 +24,12 @@ endmacro(add_debug_executable)
 # add_test_executable(fib)
 add_debug_executable(rf_parse)
 add_debug_executable(rf_load rf_parse)
+add_debug_executable(rf_sched rf_proc rf_load rf_parse)
 
 # Graded test suites
 add_test_executable(rf_load rf_parse)
+# add_test_executable(rf_sched rf_proc rf_load rf_parse)
 
 # mmap example
 add_executable(mmap_example.run mmap_example.c)
+add_executable(context_sample.run context_sample.c)

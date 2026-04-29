@@ -153,6 +153,8 @@ int rf_find_section_by_name(struct rf_parse_state *st, struct rf_shdr *shdr,
  * @param st    The parser state from which to continue reading.
  * @param shdr  The section header to read from.
  * @param buf   A pointer to a buffer that rf_read_section will allocate.
+ *                If the buffer is already allocated, then use it as is.
+ *                Otherwise, allocate a new one using `malloc`.
  *
  * @return 0 on success, -1 on failure and set st->error.
  */

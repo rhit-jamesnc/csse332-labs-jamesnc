@@ -27,7 +27,7 @@ pushd ./build/  || {
 }
 
 # generate the cmake files
-cmake -DBUILD_SOLUTIONS=OFF -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DBUILD_BINUTILS=OFF --fresh .. || {
+cmake -DBUILD_SOLUTIONS=OFF -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DBUILD_BINUTILS=OFF .. || {
   echo -e 'Automatic cmake failed, try a manual cmake in the build directory or contact your instructor' && exit 99 ;
 }
 

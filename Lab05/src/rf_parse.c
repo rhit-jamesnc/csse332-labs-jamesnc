@@ -269,11 +269,13 @@ rf_read_section_body(struct rf_parse_state *st, struct rf_shdr *shdr,
 
   // Then, read the bytes of the section into the provided buffer after
   // allocating it.
-  *buf = malloc(shdr->len);
   if(!*buf) {
-    // This is a devastating error for us, so exit, no point in returning.
-    perror("malloc");
-    exit(EXIT_FAILURE);
+    *buf = malloc(shdr->len);
+    if(!*buf) {
+      // This is a devastating error for us, so exit, no point in returning.
+      perror("malloc");
+      exit(EXIT_FAILURE);
+    }
   }
 
   // Set the file access to the start of the body.

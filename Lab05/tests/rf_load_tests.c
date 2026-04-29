@@ -15,6 +15,7 @@
 #include "cgassert.h"
 #include "cgproject.h"
 #include "cgrade.h"
+#include "cgradescropify.h"
 #include "rf.h"
 #include "rf_load.h"
 #include "rf_parse.h"
