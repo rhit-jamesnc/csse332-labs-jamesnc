@@ -1,8 +1,7 @@
 /**
  * Copyright (c) 2025 Rose-Hulman Institute of Technology. All Rights Reserved.
  * @author Noah James
- * @date   4/22/26 * @author <Your name>
- * @date   <Date last modified>
+ * @date   4/22/26 *
  */
 #ifndef _SIG_H
 #define _SIG_H

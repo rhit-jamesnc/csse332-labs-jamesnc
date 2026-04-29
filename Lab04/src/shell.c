@@ -66,9 +66,15 @@ get_prompt_line(void)
   return cmd;
 }
 
+void handle_sigchld(int sig) {
+  while (waitpid(-1, NULL, WNOHANG) > 0);
+}
+
 void
 process_command(char *cmd)
 {
+  setsighandler(SIGCHLD, handle_sigchld);
+
   char *end;
   printf("Received from the shell the command: %s\n", cmd);
 
@@ -120,7 +126,6 @@ start_fg_command(char *cmd)
   //   Implement code to start a foreground command.
   char *argv[MAX_ARGS];
   
-  // Clean implementation of parsing to ensure argv[0] is correct
   int count = 0;
   char *token = strtok(cmd, " ");
   while (token != NULL && count < MAX_ARGS - 1) {
@@ -133,7 +138,6 @@ start_fg_command(char *cmd)
     return -1;
   }
 
-  // Printing exactly as requested in the test logs
   printf("Running forgeround command %s with %d arguments\n", argv[0], count);
 
   pid_t pid = fork();
@@ -144,21 +148,17 @@ start_fg_command(char *cmd)
   }
 
   if (pid == 0) {
-    // Child Process: Execute the command
     execvp(argv[0], argv);
     
-    // If execvp returns, it failed
     perror("execvp");
     exit(EXIT_FAILURE);
   } else {
-    // Parent Process: Wait for the child to finish
     int status;
     waitpid(pid, &status, 0);
 
     if (WIFEXITED(status)) {
       int exit_code = WEXITSTATUS(status);
       
-      // Check if it exited successfully (exit code 0)
       if (exit_code == 0) {
         printf("Command %s exited successfully\n", argv[0]);
       } else {
@@ -178,12 +178,22 @@ start_bg_command(char *cmd)
   // =====
   //   Implement code to start a background command.
   char *argv[MAX_ARGS];
+
+  char cmd_copy[1024];
+  strncpy(cmd_copy, cmd, 1024);
   
   int len = strlen(cmd);
-  cmd[len] = '&';
-  cmd[len+1] = '\0';
+  cmd[len] = ' ';
+  cmd[len+1] = '&';
+  cmd[len+2] = '\0';
 
-  int count = generate_exec_args(cmd, argv);
+  int count = 0; 
+  char *token = strtok(cmd, " ");
+  while (token != NULL && count < MAX_ARGS - 1) {
+    argv[count++] = token;
+    token = strtok(NULL, " ");
+  }
+  argv[count] = NULL;
 
   if (count <= 0) {
     return;
@@ -207,11 +217,23 @@ start_bg_command(char *cmd)
       }
     }
 
-    if (execvp(argv[0], argv) == -1) {
+    pid_t worker_pid = fork();
+
+    if (worker_pid == 0) {
+      execvp(argv[0], argv);
       perror("execvp");
       exit(EXIT_FAILURE);
+    } else {
+      int status;
+      waitpid(worker_pid, &status, 0);
+      
+      printf("Background command %s finished\n", cmd_copy);
+      fflush(stdout);
+      
+      exit(EXIT_SUCCESS);
     }
   } else {
     return;
   }
+
 }
