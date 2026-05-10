@@ -62,4 +62,6 @@ void run_sched(void);
  */
 void proc_wrapper(struct rf_proc *p);
 
+volatile int cancel_swap = 0;
+
 #endif // rf_sched.h

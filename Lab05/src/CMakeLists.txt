@@ -23,3 +23,9 @@ else(BUILD_SOLUTIONS)
   add_project_lib(rf_sched rf_sched.c)
 endif(BUILD_SOLUTIONS)
 
+# add wrapper library
+add_library(rf_context SHARED rf_context.c)
+target_link_libraries(rf_context dl)
+target_compile_options(rf_context PRIVATE -Wall -ggdb -Werror -fPIC)
+target_include_directories(rf_context PUBLIC ${PROJECT_SOURCE_DIR}/include)
+

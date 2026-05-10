@@ -28,8 +28,17 @@ add_debug_executable(rf_sched rf_proc rf_load rf_parse)
 
 # Graded test suites
 add_test_executable(rf_load rf_parse)
-# add_test_executable(rf_sched rf_proc rf_load rf_parse)
+add_test_executable(rf_sched rf_proc rf_load rf_parse)
 
 # mmap example
 add_executable(mmap_example.run mmap_example.c)
 add_executable(context_sample.run context_sample.c)
+
+# Add custom target for running sched with LD_PRELOAD
+add_custom_target(run_sched_tests
+    COMMAND ${CMAKE_COMMAND} -E env
+        LD_PRELOAD=$<TARGET_FILE:rf_context>
+        $<TARGET_FILE:rf_sched_tests.run>
+    DEPENDS rf_sched_tests.run rf_context
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)

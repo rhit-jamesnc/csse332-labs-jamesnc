@@ -26,7 +26,7 @@ set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 
 # build everything with debug flags
-add_compile_options(-Wall -Werror -ggdb)
+add_compile_options(-Wall -Werror -ggdb -Wl,--wrap=swapcontext)
 
 # everything in src/ directory is relevant and should be built into libraries
 add_subdirectory(src)

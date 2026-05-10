@@ -68,8 +68,8 @@ main(int argc, char **argv)
   struct rf_parse_state st;
   struct rf_hdr hdr;
   struct rf_shdr shdr;
-  unsigned char *buf = 0;
-  char signature[8]  = {0};
+  unsigned char *buf;
+  char signature[8] = {0};
   unsigned char version;
 
   printf("Reading the contents of the RF file in 3.f. Check out proc/3.c for "
