@@ -1,8 +1,8 @@
 /**
  * Copyright (c) 2025 Rose-Hulman Institute of Technology. All Rights Reserved.
  *
- * @author <Your name>
- * @date   <Date last modified>
+ * @author Noah James
+ * @date  5/13/26
  */
 
 #include <linux/limits.h>
@@ -13,6 +13,7 @@
 
 #include "rf_proc.h"
 #include "rf_sched.h"
+#include "rf_parse.h"
 
 // Constants
 #define NPROC 16 //!< The total number of allowed processes.
@@ -69,7 +70,14 @@ proc_wrapper(struct rf_proc *p)
   //
   // 4. Move back to the scheduler.
 
+  p->state = RF_STATE_RUNNING;
+  int (*entry_func)() = (int (*)())p->entry;
+  p->proc_rv = entry_func();
+  p->state = RF_STATE_ZOMBIE;
+
   printf("Process %s completed and returned %d\n", p->name, p->proc_rv);
+
+  swapcontext(&p->ctx, p->sched);
 }
 
 struct rf_proc *
@@ -89,14 +97,49 @@ add_process(const char *path)
   // 3. Make the process's context so that we would use our wrapper to force it
   //    to clean after itself.
 
-  // Hint: This is here to help out cleanup the name of a process.
-  // create the name for the process.
-  //  search backwards from the end until we hit start or the first /
-  const char *pname = path + strlen(path);
-  while(pname != path && *pname != '/')
-    pname--;
+  struct rf_proc *new_proc = NULL;
 
-  return NULL;
+  // 1. Find a valid process spot in our array.
+  for (int i = 0; i < NPROC; i++) {
+    if (procs[i].state == RF_STATE_UNUSED) {
+      new_proc = &procs[i];
+      break;
+    }
+  }
+
+  // If the table is full (16 procs), we can't add more.
+  if (new_proc == NULL) {
+    fprintf(stderr, "[ERROR] Could not map a new process!\n");
+    return NULL;
+  }
+
+  // 2. Extract the process name (Safely!)
+  // We start at the end and walk backward. 
+  // CRITICAL: We must check *(pname - 1) to look at the character before.
+  const char *pname = path + strlen(path);
+  while(pname != path && *(pname - 1) != '/') {
+    pname--;
+  }
+
+  // 3. Load the process's memory address space.
+  // We increment the global pid for every successfully loaded process.
+  if (load_proc(new_proc, path, pid++, pname) != 0) {
+    new_proc->state = RF_STATE_UNUSED; 
+    return NULL;
+  }
+  
+  // 4. Link the scheduler context.
+  // This ensures the wrapper knows where to go when the process finishes.
+  new_proc->sched = &sched; 
+
+  // 5. Setup the execution context.
+  // makecontext modifies the context so it starts at proc_wrapper(new_proc).
+  // The '1' indicates we are passing one argument (new_proc).
+  makecontext(&new_proc->ctx, (void (*)(void))proc_wrapper, 1, new_proc);
+
+  new_proc->state = RF_STATE_READY;
+
+  return new_proc;
 }
 
 void
@@ -107,4 +150,24 @@ run_sched(void)
   //  Implement the process scheduler here. Make sure to keep running
   //  everything, one by one, until all processes are finished.
   //
+  int active_procs = 1;
+
+  while (active_procs > 0) {
+    active_procs = 0;
+
+    for (int i = 0; i < NPROC; i++) {
+      if (procs[i].state == RF_STATE_READY) {
+        active_procs++;
+        curr = &procs[i];
+
+        swapcontext(&sched, &procs[i].ctx);
+
+        if (procs[i].state == RF_STATE_ZOMBIE) {
+          unmap_proc(&procs[i]);
+          procs[i].state = RF_STATE_UNUSED;
+          active_procs--;
+        }
+      }
+    }
+  }
 }

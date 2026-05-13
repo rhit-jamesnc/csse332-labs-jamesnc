@@ -1,8 +1,8 @@
 /**
  * Copyright (c) 2025 Rose-Hulman Institute of Technology. All Rights Reserved.
  *
- * @author <Your name>
- * @date   <Date last modified>
+ * @author Noah James
+ * @date  5/13/26
  */
 #include <string.h>
 #include <sys/mman.h>
@@ -70,6 +70,10 @@ make_proc(struct rf_proc *proc)
   // TODO:
   // =====
   //  Set the state of the process to be ready!
+  proc->ctx.uc_stack.ss_sp   = proc->map.stack;
+  proc->ctx.uc_stack.ss_size = proc->map.slen;
+
+  proc->state = RF_STATE_READY;
 }
 
 int
@@ -104,14 +108,29 @@ load_proc(struct rf_proc *proc, const char *path, unsigned pid,
   }
 
   // 1. Reserve an area of memory so we set up the address space
+  size_t pagesize = getpagesize();
+  int total_pages = calc_npages(&ps);
+
+  size_t total_mem_size = total_pages * pagesize;
+  void *base_ptr = mmap(NULL, total_mem_size, PROT_READ | PROT_WRITE, 
+                        MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
   // 2. Load the code section into memory at the right spot
+  int clen, dlen;
+  proc->map.code = rf_load_code(&ps, base_ptr, &clen);
+  proc->map.clen = (unsigned)clen;
 
   // 3. Load the data region
+  proc->map.data = rf_load_data(&ps, base_ptr, &dlen); 
+  proc->map.dlen = (unsigned)dlen;
 
   // 4. Calculate the entry point
+  proc->entry = (char *)proc->map.code + hdr.entry_offset;
 
   // 5. Create a stack page
+  proc->map.slen = pagesize * 4; 
+  proc->map.stack = mmap(NULL, proc->map.slen, PROT_READ | PROT_WRITE,
+                         MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
   // 6. assign the maps
 
@@ -119,6 +138,9 @@ load_proc(struct rf_proc *proc, const char *path, unsigned pid,
   make_proc(proc);
 
   // clean up
-  rf_parse_state_destroy(&ps);
+  if (ps.fd >= 0) {
+    close(ps.fd);
+    ps.fd = -1;
+  }
   return 0;
 }
