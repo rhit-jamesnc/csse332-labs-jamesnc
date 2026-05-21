@@ -1,8 +1,8 @@
 /**
  * Copyright (c) 2025 Rose-Hulman Institute of Technology. All Rights Reserved.
  *
- * @author <Your name>
- * @date   <Date last modified>
+ * @author Noah James
+ * @date   5/11/26
  */
 #include <stdint.h>
 #include <stdio.h>
@@ -17,14 +17,31 @@
  * threads wait at a certain location in the code before they can move formward.
  * No thread can get passed the barrier until all threads reach that barrier,
  * then they can move out together in any order.
- */
+ */ 
 
 #define NUM_THREADS 5
+
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cv = PTHREAD_COND_INITIALIZER;
+int threads_waiting = 0;
 
 void
 barrier_wait(void)
 {
   // TODO: Add your code here.
+  pthread_mutex_lock(&lock);
+  threads_waiting++;
+
+  if (threads_waiting == NUM_THREADS) {
+    pthread_cond_broadcast(&cv);
+  } else {
+    while (threads_waiting < NUM_THREADS) {
+      pthread_cond_wait(&cv, &lock);
+    }
+  }
+  
+
+  pthread_mutex_unlock(&lock);
 }
 
 void *

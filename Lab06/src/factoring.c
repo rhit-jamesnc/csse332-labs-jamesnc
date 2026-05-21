@@ -1,8 +1,8 @@
 /**
  * Copyright (c) 2025 Rose-Hulman Institute of Technology. All Rights Reserved.
  *
- * @author <Your name>
- * @date   <Date last modified>
+ * @author Noah James
+ * @date   5/21/26
  */
 #include <pthread.h>
 #include <stdio.h>
@@ -21,12 +21,28 @@
 // Your threads should each just print the factors they find, they don't
 // need to communicate the factors to the original thread.
 
+unsigned long long int target;
+int numThreads;
+
+// The thread worker function
+void* factor_worker(void* arg) {
+  long rank = (long)arg;
+  unsigned long long int i;
+
+  printf("running thread\n");
+
+  for(i = 2 + rank; i <= target / 2; i = i + numThreads) {
+    printf("thread %ld testing %llu\n", rank + 1, i);
+    if(target % i == 0) {
+      printf("%llu is a factor\n", i);
+    }
+  }
+  return NULL;
+}
+
 int
 main(void)
 {
-  unsigned long long int target, i;
-  int numThreads;
-
   printf("Give a number to factor.\n");
   scanf("%llu", &target);
 
@@ -37,14 +53,15 @@ main(void)
     return 0;
   }
 
-  for(i = 2; i <= target / 2; i = i + 1) {
-    // You'll want to keep this testing line in.  Otherwise it goes so fast it
-    // can be hard to detect your code is running in parallel. Also test with a
-    // large number (i.e. > 3000)
-    printf("testing %llu\n", i);
-    if(target % i == 0) {
-      printf("%llu is a factor\n", i);
-    }
+  pthread_t threads[50];
+
+  for(long t = 0; t < numThreads; t++) {
+    pthread_create(&threads[t], NULL, factor_worker, (void*)t);
   }
+
+  for(int t = 0; t < numThreads; t++) {
+    pthread_join(threads[t], NULL);
+  }
+
   return 0;
 }
